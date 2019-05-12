@@ -1443,6 +1443,11 @@ bool GSMSim::gprsCloseConn() {
 }
 
 String GSMSim::gprsHTTPGet(String url) {
+	bool https = false;
+	if(url.startsWith("https://")) {
+		// Remove https if SSL
+		url = url.substring(8);
+	}
 	if (gprsIsConnected()) {
 		// Terminate http connection, if it opened before!
 		this->print(F("AT+HTTPTERM\r"));
@@ -1451,6 +1456,8 @@ String GSMSim::gprsHTTPGet(String url) {
 		this->print(F("AT+HTTPINIT\r"));
 		_buffer = _readSerial();
 		if (_buffer.indexOf("OK") != -1) {
+			if(https)
+				this->print("AT+HTTPSSL=1");
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
 			if (_buffer.indexOf("OK") != -1) {
@@ -1508,6 +1515,11 @@ String GSMSim::gprsHTTPGet(String url) {
 	}
 }
 String GSMSim::gprsHTTPGet(String url, bool read) {
+	bool https = false;
+	if(url.startsWith("https://")) {
+		// Remove https if SSL
+		url = url.substring(8);
+	}
 	if (gprsIsConnected()) {
 		// Terminate http connection, if it opened before!
 		this->print(F("AT+HTTPTERM\r"));
@@ -1518,6 +1530,8 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 
 		//return _buffer;
 		if (_buffer.indexOf("OK") != -1) {
+			if(https)
+				this->print("AT+HTTPSSL=1");
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
 			if (_buffer.indexOf("OK") != -1) {
