@@ -66,10 +66,9 @@ GSMSim::GSMSim(uint8_t rx, uint8_t tx, uint8_t rst, uint8_t led, bool ledflag) :
 	LED_FLAG = ledflag;
 }
 
-
-
 // Start GSMSim
-void GSMSim::start() {
+void GSMSim::start()
+{
 
 	pinMode(RESET_PIN, OUTPUT);
 	digitalWrite(RESET_PIN, HIGH);
@@ -78,13 +77,15 @@ void GSMSim::start() {
 
 	this->begin(_baud);
 
-	if (LED_FLAG) {
+	if (LED_FLAG)
+	{
 		pinMode(LED_PIN, OUTPUT);
 	}
 
 	_buffer.reserve(BUFFER_RESERVE_MEMORY);
 }
-void GSMSim::start(uint32_t baud) {
+void GSMSim::start(uint32_t baud)
+{
 	pinMode(RESET_PIN, OUTPUT);
 	digitalWrite(RESET_PIN, HIGH);
 
@@ -92,26 +93,29 @@ void GSMSim::start(uint32_t baud) {
 
 	this->begin(_baud);
 
-	if (LED_FLAG) {
+	if (LED_FLAG)
+	{
 		pinMode(LED_PIN, OUTPUT);
 	}
 
 	_buffer.reserve(BUFFER_RESERVE_MEMORY);
 }
 
-String GSMSim::readSerial() {
+String GSMSim::readSerial()
+{
 	return _readSerial();
 }
 
-String GSMSim::readSerial(uint32_t timeout) {
+String GSMSim::readSerial(uint32_t timeout)
+{
 	return _readSerial(timeout);
 }
 
-
-
 // Reset GMS Module
-void GSMSim::reset() {
-	if (LED_FLAG) {
+void GSMSim::reset()
+{
+	if (LED_FLAG)
+	{
 		digitalWrite(LED_PIN, HIGH);
 	}
 
@@ -122,134 +126,158 @@ void GSMSim::reset() {
 
 	// Modul kendine geldi mi onu bekle
 	this->print(F("AT\r"));
-	while (_readSerial().indexOf("OK") == -1) {
+	while (_readSerial().indexOf("OK") == -1)
+	{
 		this->print(F("AT\r"));
 	}
 
-	if (LED_FLAG) {
+	if (LED_FLAG)
+	{
 		digitalWrite(LED_PIN, LOW);
 	}
 }
 
-
-
 // SET PHONE FUNC
-bool GSMSim::setPhoneFunc(uint8_t level = 1) {
-	if(level != 0 || level != 1 || level != 4) {
+bool GSMSim::setPhoneFunc(uint8_t level = 1)
+{
+	if (level != 0 || level != 1 || level != 4)
+	{
 		return false;
 	}
-	else {
+	else
+	{
 		this->print(F("AT+CFUN="));
 		this->print(String(level));
 		this->print(F("\r"));
 
 		_buffer = _readSerial();
-		if( (_buffer.indexOf("OK") ) != -1)  {
+		if ((_buffer.indexOf("OK")) != -1)
+		{
 			return true;
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
 }
 
 // SIGNAL QUALTY - 0-31 | 0-> poor | 31 - Full | 99 -> Unknown
-uint8_t GSMSim::signalQuality() {
+uint8_t GSMSim::signalQuality()
+{
 	this->print(F("AT+CSQ\r"));
 	_buffer = _readSerial();
 
-	if((_buffer.indexOf("+CSQ:")) != -1) {
-		return _buffer.substring(_buffer.indexOf("+CSQ: ")+6, _buffer.indexOf(",")).toInt();
-	} else {
+	if ((_buffer.indexOf("+CSQ:")) != -1)
+	{
+		return _buffer.substring(_buffer.indexOf("+CSQ: ") + 6, _buffer.indexOf(",")).toInt();
+	}
+	else
+	{
 		return 99;
 	}
 }
 
-
 // IS Module connected to the operator?
-bool GSMSim::isRegistered() {
+bool GSMSim::isRegistered()
+{
 	this->print(F("AT+CREG?\r"));
 	_buffer = _readSerial();
 
-	if( (_buffer.indexOf("+CREG: 0,1")) != -1 || (_buffer.indexOf("+CREG: 0,5")) != -1 || (_buffer.indexOf("+CREG: 1,1")) != -1 || (_buffer.indexOf("+CREG: 1,5")) != -1) {
+	if ((_buffer.indexOf("+CREG: 0,1")) != -1 || (_buffer.indexOf("+CREG: 0,5")) != -1 || (_buffer.indexOf("+CREG: 1,1")) != -1 || (_buffer.indexOf("+CREG: 1,5")) != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // IS SIM Inserted?
-bool GSMSim::isSimInserted() {
+bool GSMSim::isSimInserted()
+{
 	this->print(F("AT+CSMINS?\r"));
 	_buffer = _readSerial();
-	if(_buffer.indexOf(",") != -1) {
+	if (_buffer.indexOf(",") != -1)
+	{
 		// bölelim
 		String veri = _buffer.substring(_buffer.indexOf(","), _buffer.indexOf("OK"));
 		veri.trim();
-		if(veri == "1") {
+		if (veri == "1")
+		{
 			return true;
-		} else {
+		}
+		else
+		{
 			return false;
 		}
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // Pin statüsü - AT+CPIN?
-uint8_t GSMSim::pinStatus() {
+uint8_t GSMSim::pinStatus()
+{
 	this->print(F("AT+CPIN?\r"));
 	_buffer = _readSerial();
 
-	if(_buffer.indexOf("READY") != -1)
+	if (_buffer.indexOf("READY") != -1)
 	{
 		return 0;
 	}
-	else if(_buffer.indexOf("SIM PIN") != -1)
+	else if (_buffer.indexOf("SIM PIN") != -1)
 	{
 		return 1;
 	}
-	else if(_buffer.indexOf("SIM PUK") != -1)
+	else if (_buffer.indexOf("SIM PUK") != -1)
 	{
 		return 2;
 	}
-	else if(_buffer.indexOf("PH_SIM PIN") != -1)
+	else if (_buffer.indexOf("PH_SIM PIN") != -1)
 	{
 		return 3;
 	}
-	else if(_buffer.indexOf("PH_SIM PUK") != -1)
+	else if (_buffer.indexOf("PH_SIM PUK") != -1)
 	{
 		return 4;
 	}
-	else if(_buffer.indexOf("SIM PIN2") != -1)
+	else if (_buffer.indexOf("SIM PIN2") != -1)
 	{
 		return 5;
 	}
-	else if(_buffer.indexOf("SIM PUK2") != -1)
+	else if (_buffer.indexOf("SIM PUK2") != -1)
 	{
 		return 6;
 	}
-	else {
+	else
+	{
 		return 7;
 	}
 }
 
-
 // OPERATOR NAME
-String GSMSim::operatorName() {
+String GSMSim::operatorName()
+{
 	this->print(F("AT+COPS?\r"));
 	_buffer = _readSerial();
 
-	if(_buffer.indexOf(",") == -1) {
+	if (_buffer.indexOf(",") == -1)
+	{
 		return "NOT CONNECTED";
 	}
-	else {
-		 return _buffer.substring(_buffer.indexOf(",\"")+2, _buffer.lastIndexOf("\""));
+	else
+	{
+		return _buffer.substring(_buffer.indexOf(",\"") + 2, _buffer.lastIndexOf("\""));
 	}
 }
 
 // OPERATOR NAME FROM SIM
-String GSMSim::operatorNameFromSim() {
+String GSMSim::operatorNameFromSim()
+{
 	this->flush();
 	this->print(F("AT+CSPN?\r"));
 	_buffer = _readSerial();
@@ -258,55 +286,65 @@ String GSMSim::operatorNameFromSim() {
 	/*
 	return _buffer;
 	*/
-	if(_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return _buffer.substring(_buffer.indexOf(" \"") + 2, _buffer.lastIndexOf("\""));
 	}
-	else {
+	else
+	{
 		return "NOT CONNECTED";
 	}
-
 }
 
 // PHONE STATUS
-uint8_t GSMSim::phoneStatus() {
+uint8_t GSMSim::phoneStatus()
+{
 	this->print(F("AT+CPAS\r"));
 	_buffer = _readSerial();
 
-	if((_buffer.indexOf("+CPAS: ")) != -1)
+	if ((_buffer.indexOf("+CPAS: ")) != -1)
 	{
-		return _buffer.substring(_buffer.indexOf("+CPAS: ")+7,_buffer.indexOf("+CPAS: ")+9).toInt();
+		return _buffer.substring(_buffer.indexOf("+CPAS: ") + 7, _buffer.indexOf("+CPAS: ") + 9).toInt();
 	}
-	else {
+	else
+	{
 		return 99; // not read from module
 	}
 }
 
 // ECHO OFF
-bool GSMSim::echoOff() {
+bool GSMSim::echoOff()
+{
 	this->print(F("ATE0\r"));
 	_buffer = _readSerial();
-	if ( (_buffer.indexOf("OK") )!=-1 ) {
-   		return true;
-   }
-   else {
-   	return false;
-   }
+	if ((_buffer.indexOf("OK")) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 // ECHO ON
-bool GSMSim::echoOn() {
+bool GSMSim::echoOn()
+{
 	this->print(F("ATE1\r"));
 	_buffer = _readSerial();
-	if ( (_buffer.indexOf("OK") )!=-1 ) {
-   		return true;
-   }
-   else {
-   	return false;
-   }
+	if ((_buffer.indexOf("OK")) != -1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 // Modül Üreticisi
-String GSMSim::moduleManufacturer() {
+String GSMSim::moduleManufacturer()
+{
 	this->print(F("AT+CGMI\r"));
 	_buffer = _readSerial();
 	String veri = _buffer.substring(8, _buffer.indexOf("OK"));
@@ -316,7 +354,8 @@ String GSMSim::moduleManufacturer() {
 }
 
 // Modül Modeli
-String GSMSim::moduleModel() {
+String GSMSim::moduleModel()
+{
 	this->print(F("AT+CGMM\r"));
 	_buffer = _readSerial();
 
@@ -327,17 +366,19 @@ String GSMSim::moduleModel() {
 }
 
 // Modül Revizyonu
-String GSMSim::moduleRevision() {
+String GSMSim::moduleRevision()
+{
 	this->print(F("AT+CGMR\r"));
 	_buffer = _readSerial();
 
-	String veri = _buffer.substring(_buffer.indexOf(":")+1 , _buffer.indexOf("OK"));
+	String veri = _buffer.substring(_buffer.indexOf(":") + 1, _buffer.indexOf("OK"));
 	veri.trim();
 	return veri;
 }
 
 // Modülün IMEI numarası
-String GSMSim::moduleIMEI() {
+String GSMSim::moduleIMEI()
+{
 	this->print(F("AT+CGSN\r"));
 	_buffer = _readSerial();
 
@@ -347,12 +388,14 @@ String GSMSim::moduleIMEI() {
 }
 
 // Modülün IMEI Numarasını değiştirir.
-bool GSMSim::moduleIMEIChange(char* imeino) {
+bool GSMSim::moduleIMEIChange(char *imeino)
+{
 	return true;
 }
 
 // Modülün SIM Numarası
-String GSMSim::moduleIMSI() {
+String GSMSim::moduleIMSI()
+{
 	this->print(F("AT+CIMI\r"));
 	_buffer = _readSerial();
 
@@ -362,7 +405,8 @@ String GSMSim::moduleIMSI() {
 }
 
 // Sim Kart Seri Numarası
-String GSMSim::moduleICCID() {
+String GSMSim::moduleICCID()
+{
 	this->print(F("AT+CCID\r"));
 	_buffer = _readSerial();
 
@@ -373,7 +417,8 @@ String GSMSim::moduleICCID() {
 }
 
 // Çalma Sesi
-uint8_t GSMSim::ringerVolume() {
+uint8_t GSMSim::ringerVolume()
+{
 	this->print(F("AT+CRSL?\r"));
 	_buffer = _readSerial();
 
@@ -384,8 +429,10 @@ uint8_t GSMSim::ringerVolume() {
 }
 
 // Çalma sesini ayarla
-bool GSMSim::setRingerVolume(uint8_t level) {
-	if(level > 100) {
+bool GSMSim::setRingerVolume(uint8_t level)
+{
+	if (level > 100)
+	{
 		level = 100;
 	}
 
@@ -394,15 +441,19 @@ bool GSMSim::setRingerVolume(uint8_t level) {
 	this->print(F("\r"));
 	_buffer = _readSerial();
 
-	if(_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // Hoparlör sesi
-uint8_t GSMSim::speakerVolume() {
+uint8_t GSMSim::speakerVolume()
+{
 	this->print(F("AT+CLVL?\r"));
 	_buffer = _readSerial();
 
@@ -413,8 +464,10 @@ uint8_t GSMSim::speakerVolume() {
 }
 
 // Hoparlör sesini ayarla
-bool GSMSim::setSpeakerVolume(uint8_t level) {
-	if(level > 100) {
+bool GSMSim::setSpeakerVolume(uint8_t level)
+{
+	if (level > 100)
+	{
 		level = 100;
 	}
 
@@ -424,27 +477,30 @@ bool GSMSim::setSpeakerVolume(uint8_t level) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
-String GSMSim::moduleDebug() {
+String GSMSim::moduleDebug()
+{
 	this->print(F("AT&V\r"));
 
 	return _readSerial();
 }
-
 
 //////////////////////////////////////
 //			CALL	SECTION			//
 //////////////////////////////////////
 
 // Arama Yapar
-bool GSMSim::call(char* phone_number) {
+bool GSMSim::call(char *phone_number)
+{
 
 	bool sorgulamaYapma = callIsCOLPActive();
 	_buffer = _readSerial();
@@ -454,24 +510,28 @@ bool GSMSim::call(char* phone_number) {
 	this->print(phone_number);
 	this->print(";\r");
 
-	if (sorgulamaYapma) {
+	if (sorgulamaYapma)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		_buffer = _readSerial();
 
 		if (_buffer.indexOf("OK") != -1)
 		{
 			return true;
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
 }
 
 // Gelen aramayı cevaplar
-bool GSMSim::callAnswer() {
+bool GSMSim::callAnswer()
+{
 	this->print(F("ATA\r"));
 
 	_buffer = _readSerial();
@@ -480,26 +540,31 @@ bool GSMSim::callAnswer() {
 	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Aramayı reddeder veya görüşmeyi sonlandırır!
-bool GSMSim::callHangoff() {
+bool GSMSim::callHangoff()
+{
 	this->print(F("ATH\r"));
 	_buffer = _readSerial();
 
-	if(_buffer.indexOf("OK") != -1)
+	if (_buffer.indexOf("OK") != -1)
 	{
 		return true;
-	} else {
+	}
+	else
+	{
 		return false;
 	}
 }
 
 // Arama durumunu belirtir
-uint8_t GSMSim::callStatus() {
+uint8_t GSMSim::callStatus()
+{
 	/*
 		values of return:
 		0 Ready (MT allows commands from TA/TE)
@@ -513,7 +578,8 @@ uint8_t GSMSim::callStatus() {
 }
 
 // Connected Line Identification aktif veya kapalı
-bool GSMSim::callSetCOLP(bool active) {
+bool GSMSim::callSetCOLP(bool active)
+{
 	int durum = active == true ? 1 : 0;
 	this->print(F("AT+COLP="));
 	this->print(durum);
@@ -525,26 +591,31 @@ bool GSMSim::callSetCOLP(bool active) {
 	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // COLP Aktif mi değil mi?
-bool GSMSim::callIsCOLPActive() {
+bool GSMSim::callIsCOLPActive()
+{
 	this->print("AT+COLP?\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("+COLP: 1") != -1) {
+	if (_buffer.indexOf("+COLP: 1") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Arayanı söyleme aktif mi değil mi?
-bool GSMSim::callActivateListCurrent(bool active) {
+bool GSMSim::callActivateListCurrent(bool active)
+{
 	int durum = active == true ? 1 : 0;
 	this->print(F("AT+CLCC="));
 	this->print(durum);
@@ -556,37 +627,47 @@ bool GSMSim::callActivateListCurrent(bool active) {
 	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 // şimdi arayanı söyle
-String GSMSim::callReadCurrentCall(String serialRaw) {
+String GSMSim::callReadCurrentCall(String serialRaw)
+{
 
 	String sonuc = "";
-	if (serialRaw.indexOf("+CLCC:") != -1) {
-		String durum = serialRaw.substring(11,13);
+	if (serialRaw.indexOf("+CLCC:") != -1)
+	{
+		String durum = serialRaw.substring(11, 13);
 		String numara = serialRaw.substring(18, serialRaw.indexOf("\","));
 
-		if (durum == "0") {
+		if (durum == "0")
+		{
 			durum = "STATUS:ACTIVE"; // Görüşme var
 		}
-		else if (durum == "1") {
+		else if (durum == "1")
+		{
 			durum = "STATUS:HELD";
 		}
-		else if (durum == "2") {
+		else if (durum == "2")
+		{
 			durum = "STATUS:DIALING"; // Çevriliyor
 		}
-		else if (durum == "3") {
+		else if (durum == "3")
+		{
 			durum = "STATUS:ALERTING"; // Çalıyor
 		}
-		else if (durum == "4") {
+		else if (durum == "4")
+		{
 			durum = "STATUS:INCOMING"; // Gelen arama
 		}
-		else if (durum == "5") {
+		else if (durum == "5")
+		{
 			durum = "STATUS:WAITING"; // gelen arama bekliyor
 		}
-		else if (durum == "6") {
+		else if (durum == "6")
+		{
 			durum = "STATUS:DISCONNECT"; // görüşme bitti
 		}
 
@@ -596,22 +677,25 @@ String GSMSim::callReadCurrentCall(String serialRaw) {
 	return sonuc;
 }
 
-
 //////////////////////////////////////
 //			MESAJ BÖLÜMÜ			//
 //////////////////////////////////////
 
 // SMS i TEXT ya da PDU moduna alır.
-bool GSMSim::smsTextMode(bool textModeON) {
-	if (textModeON == true) {
+bool GSMSim::smsTextMode(bool textModeON)
+{
+	if (textModeON == true)
+	{
 		this->print(F("AT+CMGF=1\r"));
 	}
-	else {
+	else
+	{
 		this->print(F("AT+CMGF=0\r"));
 	}
 	bool sonuc = false;
 	_buffer = _readSerial();
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		sonuc = true;
 	}
 
@@ -619,8 +703,9 @@ bool GSMSim::smsTextMode(bool textModeON) {
 }
 
 // verilen numara ve mesajı gönderir!
-bool GSMSim::smsSend(char* number, char* message) {
-	this->print(F("AT+CMGS=\""));  // command to send sms
+bool GSMSim::smsSend(char *number, char *message)
+{
+	this->print(F("AT+CMGS=\"")); // command to send sms
 	this->print(number);
 	this->print(F("\"\r"));
 	_buffer = _readSerial();
@@ -635,16 +720,19 @@ bool GSMSim::smsSend(char* number, char* message) {
 	/*
 	return _buffer;
 	*/
-	if (((_buffer.indexOf("AT+CMGS")) != -1)) {
+	if (((_buffer.indexOf("AT+CMGS")) != -1))
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Belirtilen klasördeki smslerin indexlerini listeler!
-String GSMSim::smsListUnread() {
+String GSMSim::smsListUnread()
+{
 
 	this->print(F("AT+CMGL=\"REC UNREAD\",1\r"));
 
@@ -652,19 +740,22 @@ String GSMSim::smsListUnread() {
 
 	String donus = "";
 
-	if (_buffer.indexOf("ERROR") != -1) {
+	if (_buffer.indexOf("ERROR") != -1)
+	{
 		donus = "ERROR";
 	}
 
-
-	if (_buffer.indexOf("+CMGL:") != -1) {
+	if (_buffer.indexOf("+CMGL:") != -1)
+	{
 
 		String veri = _buffer;
 		bool islem = false;
 		donus = "";
 
-		while (!islem) {
-			if (veri.indexOf("+CMGL:") == -1) {
+		while (!islem)
+		{
+			if (veri.indexOf("+CMGL:") == -1)
+			{
 				islem = true;
 				continue;
 			}
@@ -673,20 +764,22 @@ String GSMSim::smsListUnread() {
 			String metin = veri.substring(0, veri.indexOf(","));
 			metin.trim();
 
-			if (donus == "") {
+			if (donus == "")
+			{
 				donus += "SMSIndexNo:";
 				donus += metin;
 			}
-			else {
+			else
+			{
 				donus += ",";
 				donus += metin;
 			}
-
 		}
-
 	}
-	else {
-		if (donus != "ERROR") {
+	else
+	{
+		if (donus != "ERROR")
+		{
 			donus = "NO_SMS";
 		}
 	}
@@ -695,7 +788,8 @@ String GSMSim::smsListUnread() {
 }
 
 // Indexi verilen mesajı okur. Anlaşılır hale getirir!
-String GSMSim::smsRead(uint8_t index) {
+String GSMSim::smsRead(uint8_t index)
+{
 	this->print("AT+CMGR=");
 	this->print(index);
 	this->print(",0\r");
@@ -704,26 +798,31 @@ String GSMSim::smsRead(uint8_t index) {
 
 	String durum = "INDEX_NO_ERROR";
 
-	if (_buffer.indexOf("+CMGR:") != -1) {
+	if (_buffer.indexOf("+CMGR:") != -1)
+	{
 
 		String klasor, okundumu, telno, zaman, mesaj;
 
 		klasor = "UNKNOWN";
 		okundumu = "UNKNOWN";
 
-		if (_buffer.indexOf("REC UNREAD") != -1) {
+		if (_buffer.indexOf("REC UNREAD") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "UNREAD";
 		}
-		if (_buffer.indexOf("REC READ") != -1) {
+		if (_buffer.indexOf("REC READ") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "READ";
 		}
-		if (_buffer.indexOf("STO UNSENT") != -1) {
+		if (_buffer.indexOf("STO UNSENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "UNSENT";
 		}
-		if (_buffer.indexOf("STO SENT") != -1) {
+		if (_buffer.indexOf("STO SENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "SENT";
 		}
@@ -754,14 +853,17 @@ String GSMSim::smsRead(uint8_t index) {
 	return durum;
 }
 // Indexi verilen mesajı okur. Anlaşılır hale getirir!
-String GSMSim::smsRead(uint8_t index, bool markRead) {
+String GSMSim::smsRead(uint8_t index, bool markRead)
+{
 	this->print("AT+CMGR=");
 	this->print(index);
 	this->print(",");
-	if (markRead == true) {
+	if (markRead == true)
+	{
 		this->print("0");
 	}
-	else {
+	else
+	{
 		this->print("1");
 	}
 	this->print("\r");
@@ -770,26 +872,31 @@ String GSMSim::smsRead(uint8_t index, bool markRead) {
 
 	String durum = "INDEX_NO_ERROR";
 
-	if (_buffer.indexOf("+CMGR:") != -1) {
+	if (_buffer.indexOf("+CMGR:") != -1)
+	{
 
 		String klasor, okundumu, telno, zaman, mesaj;
 
 		klasor = "UNKNOWN";
 		okundumu = "UNKNOWN";
 
-		if (_buffer.indexOf("REC UNREAD") != -1) {
+		if (_buffer.indexOf("REC UNREAD") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "UNREAD";
 		}
-		if (_buffer.indexOf("REC READ") != -1) {
+		if (_buffer.indexOf("REC READ") != -1)
+		{
 			klasor = "INCOMING";
 			okundumu = "READ";
 		}
-		if (_buffer.indexOf("STO UNSENT") != -1) {
+		if (_buffer.indexOf("STO UNSENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "UNSENT";
 		}
-		if (_buffer.indexOf("STO SENT") != -1) {
+		if (_buffer.indexOf("STO SENT") != -1)
+		{
 			klasor = "OUTGOING";
 			okundumu = "SENT";
 		}
@@ -801,7 +908,7 @@ String GSMSim::smsRead(uint8_t index, bool markRead) {
 
 		zaman = tarih_bol.substring(0, tarih_bol.indexOf("\"")); // zamanı da aldık. Bir tek mesaj kaldı!
 
-		mesaj = tarih_bol.substring(tarih_bol.indexOf("\"")+1, tarih_bol.lastIndexOf("OK"));
+		mesaj = tarih_bol.substring(tarih_bol.indexOf("\"") + 1, tarih_bol.lastIndexOf("OK"));
 
 		mesaj.trim();
 
@@ -821,33 +928,40 @@ String GSMSim::smsRead(uint8_t index, bool markRead) {
 }
 
 // Serialden Mesajı okur
-String GSMSim::smsReadFromSerial(String serialRaw) {
-	if (serialRaw.indexOf("+CMTI:") != -1) {
+String GSMSim::smsReadFromSerial(String serialRaw)
+{
+	if (serialRaw.indexOf("+CMTI:") != -1)
+	{
 		String numara = serialRaw.substring(serialRaw.indexOf("\",") + 2);
 		int no = numara.toInt();
 
 		return smsRead(no, true);
 	}
-	else {
+	else
+	{
 		return "RAW_DATA_NOT_READ";
 	}
 }
 
 // serialden mesajın indexini alır
-uint8_t GSMSim::smsIndexFromSerial(String serialRaw) {
-	if (serialRaw.indexOf("+CMTI:") != -1) {
+uint8_t GSMSim::smsIndexFromSerial(String serialRaw)
+{
+	if (serialRaw.indexOf("+CMTI:") != -1)
+	{
 		String numara = serialRaw.substring(serialRaw.indexOf("\",") + 2);
 		int no = numara.toInt();
 
 		return no;
 	}
-	else {
+	else
+	{
 		return -1;
 	}
 }
 
 // mesaj merkez numasını getirir
-String GSMSim::smsReadMessageCenter() {
+String GSMSim::smsReadMessageCenter()
+{
 	this->print("AT+CSCA?\r");
 	_buffer = _readSerial();
 
@@ -855,98 +969,115 @@ String GSMSim::smsReadMessageCenter() {
 
 	if (_buffer.indexOf("+CSCA:") != -1)
 	{
-		sonuc = _buffer.substring(_buffer.indexOf("+CSCA:")+8, _buffer.indexOf("\","));
+		sonuc = _buffer.substring(_buffer.indexOf("+CSCA:") + 8, _buffer.indexOf("\","));
 	}
 
 	return sonuc;
 }
 
 // mesaj merkez numarasını değiştirir
-bool GSMSim::smsChangeMessageCenter(char* messageCenter) {
+bool GSMSim::smsChangeMessageCenter(char *messageCenter)
+{
 	this->print("AT+CSCA=\"");
 	this->print(messageCenter);
 	this->print("\"\r");
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // tek bir mesajı siler
-bool GSMSim::smsDeleteOne(uint8_t index) {
+bool GSMSim::smsDeleteOne(uint8_t index)
+{
 	this->print(F("AT+CMGD="));
 	this->print(index);
 	this->print(F(",0\r"));
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
-
 }
 
 // Tüm okunmuş mesajlaarı siler. Fakat gidene dokunmaz
-bool GSMSim::smsDeleteAllRead() {
+bool GSMSim::smsDeleteAllRead()
+{
 	this->print(F("AT+CMGD=1,1\r"));
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // okunmuş okunmamış ne varsa siler
-bool GSMSim::smsDeleteAll() {
+bool GSMSim::smsDeleteAll()
+{
 	this->print(F("AT+CMGD=1,4\r"));
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // Gelen Mesaj Indicatorünü değiştir
-bool GSMSim::smsChangeIncomingIndicator(bool save) {
-	if (save) {
+bool GSMSim::smsChangeIncomingIndicator(bool save)
+{
+	if (save)
+	{
 		this->print(F("AT+CNMI=1,1,0,0,0\r"));
-	} else {
+	}
+	else
+	{
 		this->print(F("AT+CNMI=2,2,0,0,0\r"));
 	}
-	
+
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-
 
 //////////////////////////////////////
 //			DTMF BÖLÜMÜ				//
 //////////////////////////////////////
 
 // DTMF yi ayarlar
-bool GSMSim::dtmfSet(bool active, uint8_t interval, bool reportTime, bool soundDetect) {
+bool GSMSim::dtmfSet(bool active, uint8_t interval, bool reportTime, bool soundDetect)
+{
 	int mode = active == true ? 1 : 0;
 	int rtime = reportTime == true ? 1 : 0;
 	int ssdet = soundDetect == true ? 1 : 0;
@@ -963,64 +1094,74 @@ bool GSMSim::dtmfSet(bool active, uint8_t interval, bool reportTime, bool soundD
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 // Serialden DTMF Yi okur ve karakter olarak geri döner!
-String GSMSim::dtmfRead(String serialRaw) {
+String GSMSim::dtmfRead(String serialRaw)
+{
 
-	if (serialRaw.indexOf("+DTMF:") != -1) {
+	if (serialRaw.indexOf("+DTMF:") != -1)
+	{
 		//  var mı yok mu?
 		String metin;
-		if (serialRaw.indexOf(",") != -1) {
+		if (serialRaw.indexOf(",") != -1)
+		{
 			metin = serialRaw.substring(7, serialRaw.indexOf(","));
 		}
-		else {
+		else
+		{
 			metin = serialRaw.substring(7);
 		}
 
 		return metin;
 	}
-	else {
+	else
+	{
 		return "?";
 	}
-
 }
-
 
 //////////////////////////////////////
 //			USSD SECTION			//
 //////////////////////////////////////
 // USSD kodu gönderir
-bool GSMSim::ussdSend(char* code) {
+bool GSMSim::ussdSend(char *code)
+{
 	this->print(F("AT+CUSD=1,\""));
 	this->print(code);
 	this->print(F("\"\r"));
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 // Raw datadan cevabı okur!
-String GSMSim::ussdRead(String serialRaw) {
-	if (serialRaw.indexOf("+CUSD:") != -1) {
+String GSMSim::ussdRead(String serialRaw)
+{
+	if (serialRaw.indexOf("+CUSD:") != -1)
+	{
 		String metin = serialRaw.substring(serialRaw.indexOf(",\"") + 2, serialRaw.indexOf("\","));
 		return metin;
 	}
-	else {
+	else
+	{
 		return "NOT_USSD_RAW";
 	}
 }
-
 
 //////////////////////////////////////
 //			FM RADIO SECTION		//
@@ -1029,18 +1170,22 @@ String GSMSim::ussdRead(String serialRaw) {
 // SIM800L & SIM800H only
 
 // FM RADIO Open
-bool GSMSim::fmOpen() {
+bool GSMSim::fmOpen()
+{
 	this->print(F("AT+FMOPEN=0\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::fmOpen(bool mainChannel) {
+bool GSMSim::fmOpen(bool mainChannel)
+{
 	uint8_t channel = mainChannel == true ? 1 : 0;
 	this->print(F("AT+FMOPEN="));
 	this->print(channel);
@@ -1048,23 +1193,27 @@ bool GSMSim::fmOpen(bool mainChannel) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::fmOpen(bool mainChannel, uint8_t freq) {
+bool GSMSim::fmOpen(bool mainChannel, uint8_t freq)
+{
 	uint8_t channel = mainChannel == true ? 1 : 0;
 	uint8_t frekans = (uint8_t)875;
-	if (freq < 875) {
+	if (freq < 875)
+	{
 		frekans = (uint8_t)875;
 	}
-	if (freq > 1080) {
+	if (freq > 1080)
+	{
 		frekans = (uint8_t)1080;
 	}
-
 
 	this->print(F("AT+FMOPEN="));
 	this->print(channel);
@@ -1074,63 +1223,77 @@ bool GSMSim::fmOpen(bool mainChannel, uint8_t freq) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // FM IS OPENED?
-bool GSMSim::fmIsOpened() {
+bool GSMSim::fmIsOpened()
+{
 	this->print(F("AT+FMOPEN?\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("+FMOPEN: 1") != -1) {
+	if (_buffer.indexOf("+FMOPEN: 1") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // FM RADIO CLOSE
-bool GSMSim::fmClose() {
+bool GSMSim::fmClose()
+{
 	this->print(F("AT+FMCLOSE\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // GET FM RADIO FREQ
-uint8_t GSMSim::fmGetFreq() {
+uint8_t GSMSim::fmGetFreq()
+{
 	this->print(F("AT+FMFREQ?\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("+FMFREQ:") != -1) {
-		String sonuc = _buffer.substring(_buffer.indexOf("+FMFREQ:")+8);
+	if (_buffer.indexOf("+FMFREQ:") != -1)
+	{
+		String sonuc = _buffer.substring(_buffer.indexOf("+FMFREQ:") + 8);
 		sonuc.trim();
 		return sonuc.toInt();
 	}
-	else {
+	else
+	{
 		return 0;
 	}
 }
 
 // SET FM RADIO FREQ
-bool GSMSim::fmSetFreq(uint8_t freq) {
+bool GSMSim::fmSetFreq(uint8_t freq)
+{
 	this->print(F("AT+FMFREQ="));
 	uint8_t frekans = (uint8_t)875;
-	if (freq < 875) {
+	if (freq < 875)
+	{
 		frekans = (uint8_t)875;
 	}
-	if (freq > 1080) {
+	if (freq > 1080)
+	{
 		frekans = (uint8_t)1080;
 	}
 	this->print(frekans);
@@ -1138,37 +1301,45 @@ bool GSMSim::fmSetFreq(uint8_t freq) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
 // GET FM RADIO FREQ
-uint8_t GSMSim::fmGetVolume() {
+uint8_t GSMSim::fmGetVolume()
+{
 	this->print(F("AT+FMVOLUME?\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("+FMVOLUME:") != -1) {
-		String sonuc = _buffer.substring(_buffer.indexOf("+FMVOLUME:")+10);
+	if (_buffer.indexOf("+FMVOLUME:") != -1)
+	{
+		String sonuc = _buffer.substring(_buffer.indexOf("+FMVOLUME:") + 10);
 		sonuc.trim();
 		return sonuc.toInt();
 	}
-	else {
+	else
+	{
 		return 0;
 	}
 }
 
 // SET FM RADIO FREQ
-bool GSMSim::fmSetVolume(uint8_t volume) {
+bool GSMSim::fmSetVolume(uint8_t volume)
+{
 	this->print(F("AT+FMVOLUME="));
 	uint8_t vol = 0;
-	if (volume < 0) {
+	if (volume < 0)
+	{
 		vol = 0;
 	}
-	if (volume > 6) {
+	if (volume > 6)
+	{
 		vol = 6;
 	}
 	this->print(vol);
@@ -1176,91 +1347,103 @@ bool GSMSim::fmSetVolume(uint8_t volume) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-
 
 //////////////////////////////////////
 //			GPRS METHODS			//
 //////////////////////////////////////
 // Connect to GPRS Bearer
 
-
-
-
-bool GSMSim::gprsConnectBearer() {
+bool GSMSim::gprsConnectBearer()
+{
 	this->print(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		delay(100);
 		this->print(F("AT+SAPBR=3,1,\"APN\",\"internet\"\r"));
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 			delay(100);
 
 			this->print(F("AT+SAPBR=3,1,\"USER\",\"\"\r"));
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 
 				delay(100);
 
 				this->print(F("AT+SAPBR=3,1,\"PWD\",\"\"\r"));
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 
 					delay(100);
 					this->print("AT+SAPBR=1,1\r");
 					_buffer = _readSerial();
 					delay(50);
 					_buffer += _readSerial();
-					if (_buffer.indexOf("OK") != -1) {
+					if (_buffer.indexOf("OK") != -1)
+					{
 
 						this->print("AT+SAPBR=2,1\r");
 						_buffer = _readSerial();
 
-						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1) {
+						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1)
+						{
 							return false;
 						}
-						else {
+						else
+						{
 							return true;
 						}
 					}
-					else {
+					else
+					{
 						return false;
 					}
-
 				}
-				else {
+				else
+				{
 					return false;
 				}
 			}
-			else {
+			else
+			{
 				return false;
 			}
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::gprsConnectBearer(String apn) {
+bool GSMSim::gprsConnectBearer(String apn)
+{
 	this->print(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		delay(100);
 		this->print(F("AT+SAPBR=3,1,\"APN\",\""));
@@ -1268,64 +1451,76 @@ bool GSMSim::gprsConnectBearer(String apn) {
 		this->print(F("\"\r"));
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 			delay(100);
 
 			this->print(F("AT+SAPBR=3,1,\"USER\",\"\"\r"));
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 
 				delay(100);
 
 				this->print(F("AT+SAPBR=3,1,\"PWD\",\"\"\r"));
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 
 					delay(100);
 					this->print("AT+SAPBR=1,1\r");
 					_buffer = _readSerial();
 					delay(50);
 					_buffer += _readSerial();
-					if (_buffer.indexOf("OK") != -1) {
+					if (_buffer.indexOf("OK") != -1)
+					{
 
 						this->print("AT+SAPBR=2,1\r");
 						_buffer = _readSerial();
 
-						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1) {
+						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1)
+						{
 							return false;
 						}
-						else {
+						else
+						{
 							return true;
 						}
 					}
-					else {
+					else
+					{
 						return false;
 					}
-
 				}
-				else {
+				else
+				{
 					return false;
 				}
 			}
-			else {
+			else
+			{
 				return false;
 			}
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::gprsConnectBearer(String apn, String user, String password) {
+bool GSMSim::gprsConnectBearer(String apn, String user, String password)
+{
 	this->print(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		delay(100);
 		this->print(F("AT+SAPBR=3,1,\"APN\",\""));
@@ -1333,7 +1528,8 @@ bool GSMSim::gprsConnectBearer(String apn, String user, String password) {
 		this->print(F("\"\r"));
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 			delay(100);
 
 			this->print(F("AT+SAPBR=3,1,\"USER\",\""));
@@ -1341,7 +1537,8 @@ bool GSMSim::gprsConnectBearer(String apn, String user, String password) {
 			this->print(F("\"\r"));
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 
 				delay(100);
 
@@ -1350,62 +1547,74 @@ bool GSMSim::gprsConnectBearer(String apn, String user, String password) {
 				this->print(F("\"\r"));
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 
 					delay(100);
 					this->print("AT+SAPBR=1,1\r");
 					_buffer = _readSerial();
 					delay(50);
 					_buffer += _readSerial();
-					if (_buffer.indexOf("OK") != -1) {
+					if (_buffer.indexOf("OK") != -1)
+					{
 
 						this->print("AT+SAPBR=2,1\r");
 						_buffer = _readSerial();
 
-						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1) {
+						if (_buffer.indexOf("\"0.0.0.0\"") != -1 || _buffer.indexOf("ERR") != -1)
+						{
 							return false;
 						}
-						else {
+						else
+						{
 							return true;
 						}
 					}
-					else {
+					else
+					{
 						return false;
 					}
-
 				}
-				else {
+				else
+				{
 					return false;
 				}
 			}
-			else {
+			else
+			{
 				return false;
 			}
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 // Check is GPRS connected?
-bool GSMSim::gprsIsConnected() {
+bool GSMSim::gprsIsConnected()
+{
 	this->print(F("AT+SAPBR=2,1\r"));
 	_buffer = _readSerial();
 	delay(50);
 	_buffer += _readSerial();
 
-	if (_buffer.indexOf("ERR") != -1 || _buffer.indexOf("\"0.0.0.0\"") != -1) {
+	if (_buffer.indexOf("ERR") != -1 || _buffer.indexOf("\"0.0.0.0\"") != -1)
+	{
 		return false;
 	}
-	else {
+	else
+	{
 		return true;
 	}
 }
 // GET IP Address
-String GSMSim::gprsGetIP() {
+String GSMSim::gprsGetIP()
+{
 	this->print(F("AT+SAPBR=2,1\r\n"));
 	_buffer = _readSerial();
 	delay(50);
@@ -1413,77 +1622,94 @@ String GSMSim::gprsGetIP() {
 
 	//return _buffer;
 
-	if (_buffer.indexOf("ERR") != -1 || _buffer.indexOf("\"0.0.0.0\"") != -1) {
+	if (_buffer.indexOf("ERR") != -1 || _buffer.indexOf("\"0.0.0.0\"") != -1)
+	{
 		return "ERROR:NO_IP";
 	}
-	else {
-		if (_buffer.indexOf("+SAPBR:") != -1) {
-			String veri = _buffer.substring(_buffer.indexOf(",\"")+2, _buffer.lastIndexOf("\""));
+	else
+	{
+		if (_buffer.indexOf("+SAPBR:") != -1)
+		{
+			String veri = _buffer.substring(_buffer.indexOf(",\"") + 2, _buffer.lastIndexOf("\""));
 			veri.trim();
 			return veri;
 		}
-		else {
+		else
+		{
 			return "ERROR:NO_IP_FETCH";
 		}
 	}
 }
 
-bool GSMSim::gprsCloseConn() {
+bool GSMSim::gprsCloseConn()
+{
 	this->print(F("AT+SAPBR=0,1\r"));
 	_buffer = _readSerial();
 	delay(50);
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
 
-String GSMSim::gprsHTTPGet(String url) {
+String GSMSim::gprsHTTPGet(String url)
+{
 	bool https = false;
-	if(url.startsWith("https://")) {
+	if (url.startsWith("https://"))
+	{
 		// Remove https if SSL
 		//url = url.substring(8);
 		https = true;
 	}
-	if (gprsIsConnected()) {
+	if (gprsIsConnected())
+	{
 		// Terminate http connection, if it opened before!
 		this->print(F("AT+HTTPTERM\r"));
 		_buffer = _readSerial();
 
 		this->print(F("AT+HTTPINIT\r"));
 		_buffer = _readSerial();
-		if (_buffer.indexOf("OK") != -1) {
-			if(https) {
+		if (_buffer.indexOf("OK") != -1)
+		{
+			if (https)
+			{
 				this->print("AT+HTTPSSL=1\r");
 				_buffer = _readSerial();
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 				}
 				else
 				{
 					return "HTTPSSL_ERROR";
-				}				
+				}
 			}
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 				this->print(F("AT+HTTPPARA=\"URL\",\""));
 				this->print(url);
 				this->print("\"\r");
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 					this->print(F("AT+HTTPACTION=0\r"));
 					_buffer = _readSerial();
-					if (_buffer.indexOf("OK") != -1) {
+					if (_buffer.indexOf("OK") != -1)
+					{
 						delay(100);
 						_buffer = _readSerial(10000);
-						if (_buffer.indexOf("+HTTPACTION: 0,") != -1) {
-							String kod = _buffer.substring(_buffer.indexOf(",")+1, _buffer.lastIndexOf(","));
-							String uzunluk = _buffer.substring(_buffer.lastIndexOf(",")+1);
+						if (_buffer.indexOf("+HTTPACTION: 0,") != -1)
+						{
+							String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
+							String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
 
 							String sonuc = "METHOD:GET|HTTPCODE:";
 							sonuc += kod;
@@ -1498,40 +1724,48 @@ String GSMSim::gprsHTTPGet(String url) {
 
 							return sonuc;
 						}
-						else {
+						else
+						{
 							return "HTTP_ACTION_READ_ERROR";
 						}
 					}
-					else {
+					else
+					{
 						return "HTTP_ACTION_ERROR";
 					}
 				}
-				else {
+				else
+				{
 					return "HTTP_PARAMETER_ERROR";
 				}
-
 			}
-			else {
+			else
+			{
 				return "HTTP_PARAMETER_ERROR";
 			}
 		}
-		else {
+		else
+		{
 			return "HTTP_INIT_ERROR";
 		}
 	}
-	else {
+	else
+	{
 		return "GPRS_NOT_CONNECTED";
 	}
 }
 
-String GSMSim::gprsHTTPGet(String url, bool read) {
+String GSMSim::gprsHTTPGet(String url, bool read)
+{
 	bool https = false;
-	if(url.startsWith("https://")) {
+	if (url.startsWith("https://"))
+	{
 		// Remove https if SSL
 		url = url.substring(8);
 		https = true;
 	}
-	if (gprsIsConnected()) {
+	if (gprsIsConnected())
+	{
 		// Terminate http connection, if it opened before!
 		this->print(F("AT+HTTPTERM\r"));
 		_buffer = _readSerial();
@@ -1540,28 +1774,35 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 		_buffer = _readSerial();
 
 		//return _buffer;
-		if (_buffer.indexOf("OK") != -1) {
-			if(https) {
+		if (_buffer.indexOf("OK") != -1)
+		{
+			if (https)
+			{
 				this->print("AT+HTTPSSL=1\r");
 				_buffer = _readSerial();
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 				}
 			}
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 				this->print(F("AT+HTTPPARA=\"URL\",\""));
 				this->print(url);
 				this->print(F("\"\r"));
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 					this->print(F("AT+HTTPACTION=0\r"));
 					_buffer = _readSerial();
-					if (_buffer.indexOf("OK") != -1) {
+					if (_buffer.indexOf("OK") != -1)
+					{
 						delay(100);
 						_buffer = _readSerial(10000);
-						if (_buffer.indexOf("+HTTPACTION: 0,") != -1) {
+						if (_buffer.indexOf("+HTTPACTION: 0,") != -1)
+						{
 							String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
 							String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
 							kod.trim();
@@ -1572,13 +1813,15 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 
 							String okuma = "";
 
-							if (_buffer.indexOf("+HTTPREAD:") != -1) {
+							if (_buffer.indexOf("+HTTPREAD:") != -1)
+							{
 
 								String kriter = "+HTTPREAD: " + uzunluk;
 								String veri = _buffer.substring(_buffer.indexOf(kriter) + kriter.length(), _buffer.lastIndexOf("OK"));
 								okuma = veri;
 							}
-							else {
+							else
+							{
 								return "ERROR:HTTP_READ_ERROR";
 							}
 
@@ -1597,180 +1840,177 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 
 							return sonuc;
 						}
-						else {
+						else
+						{
 							return "ERROR:HTTP_ACTION_READ_ERROR";
 						}
 					}
-					else {
+					else
+					{
 						return "ERROR:HTTP_ACTION_ERROR";
 					}
 				}
-				else {
+				else
+				{
 					return "ERROR:HTTP_PARAMETER_ERROR";
 				}
-
 			}
-			else {
+			else
+			{
 				return "ERROR:HTTP_PARAMETER_ERROR";
 			}
 		}
-		else {
+		else
+		{
 			return "ERROR:HTTP_INIT_ERROR";
 		}
 	}
-	else {
+	else
+	{
 		return "ERROR:GPRS_NOT_CONNECTED";
 	}
 }
 
-String GSMSim::gprsHTTPPost(String url, String data) {
+String GSMSim::gprsHTTPPost(String url, String data)
+{
 	bool https = false;
-	if(url.startsWith("https://")) {
+	if (url.startsWith("https://"))
+	{
 		https = true;
 	}
-	
-	if (gprsIsConnected()) {
-		// Terminate http connection, if it opened before!
-		this->print(F("AT+HTTPTERM\r"));
-		_buffer = _readSerial();
 
-		this->print(F("AT+HTTPINIT\r"));
-		_buffer = _readSerial();
-		if (_buffer.indexOf("OK") != -1) {
-			if(https) {
-				this->print("AT+HTTPSSL=1\r");
-				_buffer = _readSerial();
-				if (_buffer.indexOf("OK") != -1) {
-				}
-				else
-				{
-					return "HTTPSSL_ERROR";
-				}				
-			}
-			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
-			_buffer = _readSerial();
-
-			if (_buffer.indexOf("OK") != -1) {
-				this->print(F("AT+HTTPPARA=\"URL\",\""));
-				this->print(url);
-				this->print("\"\r");
-				_buffer = _readSerial();
-
-				if (_buffer.indexOf("OK") != -1) {
-					this->print(F("AT+HTTPDATA="));
-					this->print(data.length());
-					this->print(F(",30000\r"));
-					_buffer = _readSerial();
-
-					if (_buffer.indexOf("DOWNLOAD") != -1) {
-						this->print(data);
-						this->print(F("\r"));
-						_buffer = _readSerial();
-
-						if (_buffer.indexOf("OK") != -1) {
-							this->print(F("AT+HTTPACTION=1\r"));
-							_buffer = _readSerial();
-
-							if (_buffer.indexOf("OK") != -1) {
-								delay(100);
-								_buffer = _readSerial(10000);
-
-								if (_buffer.indexOf("+HTTPACTION: 1,") != -1) {
-									String kod = _buffer.substring(_buffer.indexOf(",")+1, _buffer.lastIndexOf(","));
-									String uzunluk = _buffer.substring(_buffer.lastIndexOf(",")+1);
-
-									String sonuc = "METHOD:POST|HTTPCODE:";
-									sonuc += kod;
-									sonuc += "|LENGTH:";
-									sonuc += uzunluk;
-
-									// Bağlantıyı kapat!
-									this->print(F("AT+HTTPTERM\r"));
-									_buffer = _readSerial();
-
-									sonuc.trim();
-
-									return sonuc;
-								}
-								else {
-									return "HTTP_ACTION_READ_ERROR";
-								}
-							}
-							else {
-								return "HTTP_ACTION_ERROR";
-							}
-						}
-						else {
-							return "HTTP_DOWNLOAD_DATA_ERROR";
-						}
-					}
-					else {
-						return "HTTP_DATA_ERROR";
-					}
-				}
-				else {
-					return "HTTP_PARAMETER_ERROR";
-				}
-
-			}
-			else {
-				return "HTTP_PARAMETER_ERROR";
-			}
-		}
-		else {
-			return "HTTP_INIT_ERROR";
-		}
-	}
-	else {
+	if (!gprsIsConnected())
 		return "GPRS_NOT_CONNECTED";
-	}
-}
 
+	// Terminate http connection, if it opened before!
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+	this->print(F("AT+HTTPINIT\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_INIT_ERROR";
+
+	if (https)
+	{
+		// Set SSL if https
+		this->print("AT+HTTPSSL=1\r");
+		_buffer = _readSerial();
+		if (_buffer.indexOf("OK") == -1)
+			return "HTTPSSL_ERROR";
+	}
+
+	// Set bearer profile id
+	this->print(F("AT+HTTPPARA=\"CID\",1\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	// Set url
+	this->print(F("AT+HTTPPARA=\"URL\",\""));
+	this->print(url);
+	this->print("\"\r");
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	// Indicate that data will be transfered within 30 secods.
+	this->print(F("AT+HTTPDATA="));
+	this->print(data.length());
+	this->print(F(",30000\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("DOWNLOAD") == -1)
+		return "HTTP_DATA_ERROR";
+
+	// Send data.
+	this->print(data);
+	this->print(F("\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_DOWNLOAD_DATA_ERROR";
+
+	// Set action and perform request 1=POST
+	this->print(F("AT+HTTPACTION=1\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_ACTION_ERROR";
+
+	// Get the response.
+	delay(100);
+	_buffer = _readSerial(10000);
+	if (_buffer.indexOf("+HTTPACTION: 1,") == -1)
+		return "HTTP_ACTION_READ_ERROR";
+
+	String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
+	String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
+
+	String sonuc = "METHOD:POST|HTTPCODE:";
+	sonuc += kod;
+	sonuc += "|LENGTH:";
+	sonuc += uzunluk;
+
+	// Bağlantıyı kapat!
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+
+	sonuc.trim();
+
+	return sonuc;
+}
 
 //////////////////////////////////////
 //			TIME METHODS			//
 //////////////////////////////////////
 
-bool GSMSim::timeSetServer(int timezone) {
+bool GSMSim::timeSetServer(int timezone)
+{
 	this->print("AT+CNTPCID=1\r");
 	_buffer = _readSerial();
 
 	int zaman = 0;
-	if (timezone <= -12) {
+	if (timezone <= -12)
+	{
 		zaman = -47;
 	}
-	if (timezone > 12) {
+	if (timezone > 12)
+	{
 		zaman = 48;
 	}
-	if (timezone > -12 || timezone <= 12) {
+	if (timezone > -12 || timezone <= 12)
+	{
 		zaman = timezone * 4;
 	}
 
-	this->print(F("AT+CNTP=\"202.120.2.101\","));
+	this->print(F("AT+CNTP=\"pool.ntp.org\","));
 	this->print(zaman);
 	this->print(F("\r"));
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::timeSetServer(int timezone, String server) {
+bool GSMSim::timeSetServer(int timezone, String server)
+{
 	this->print("AT+CNTPCID=1\r");
 	_buffer = _readSerial();
 
 	int zaman = 0;
-	if (timezone <= -12) {
+	if (timezone <= -12)
+	{
 		zaman = -47;
 	}
-	if (timezone > 12) {
+	if (timezone > 12)
+	{
 		zaman = 48;
 	}
-	if (timezone > -12 || timezone <= 12) {
+	if (timezone > -12 || timezone <= 12)
+	{
 		zaman = timezone * 4;
 	}
 
@@ -1782,70 +2022,86 @@ bool GSMSim::timeSetServer(int timezone, String server) {
 
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-String GSMSim::timeSyncFromServer() {
+String GSMSim::timeSyncFromServer()
+{
 
 	this->print(F("AT+CNTP\r"));
 	_buffer = _readSerial();
 	//delay(50);
 	_buffer = _readSerial(20000);
 
-
-	if (_buffer.indexOf("+CNTP:") != -1) {
+	if (_buffer.indexOf("+CNTP:") != -1)
+	{
 		String kod = _buffer.substring(8);
 		kod.trim();
 
-		if (kod == "1") {
+		if (kod == "1")
+		{
 			return "TIME_SYNCHRONIZED_SUCCESS";
 		}
-		else if (kod == "61") {
+		else if (kod == "61")
+		{
 			return "NETWORK_ERROR";
 		}
-		else if (kod == "62") {
+		else if (kod == "62")
+		{
 			return "DNS_ERROR";
 		}
-		else if (kod == "63") {
+		else if (kod == "63")
+		{
 			return "CONNECTION_ERROR";
 		}
-		else if (kod == "64") {
+		else if (kod == "64")
+		{
 			return "SERVICE_RESPONSE_ERROR";
 		}
-		else if (kod == "65") {
+		else if (kod == "65")
+		{
 			return "SERVICE_RESPONSE_TIMEOUT";
 		}
-		else {
+		else
+		{
 			return "UNKNOWN_ERROR_" + kod;
 		}
 	}
-	else {
+	else
+	{
 		return "AT_COMMAND_ERROR";
 		//return _buffer;
 	}
 }
 
-String GSMSim::timeGetRaw() {
+String GSMSim::timeGetRaw()
+{
 	this->print("AT+CCLK?\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		String zaman = _buffer.substring(_buffer.indexOf("\"") + 1, _buffer.lastIndexOf("\""));
 		return zaman;
 	}
-	else {
+	else
+	{
 		return "ERROR:NOT_GET_DATETIME";
 	}
 }
-void GSMSim::timeGet(int *day, int *month, int *year, int *hour, int *minute, int *second) {
+void GSMSim::timeGet(int *day, int *month, int *year, int *hour, int *minute, int *second)
+{
 	this->print("AT+CCLK?\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		_buffer = _buffer.substring(_buffer.indexOf("\"") + 1, _buffer.lastIndexOf("\"") - 1);
 		*year = (_buffer.substring(0, 2).toInt()) + 2000;
 		*month = _buffer.substring(3, 5).toInt();
@@ -1856,12 +2112,12 @@ void GSMSim::timeGet(int *day, int *month, int *year, int *hour, int *minute, in
 	}
 }
 
-
 //////////////////////////////////////
 //			EMAIL METHODS			//
 //////////////////////////////////////
 
-bool GSMSim::emailSMTPConf(String server, String port, bool useSSL) {
+bool GSMSim::emailSMTPConf(String server, String port, bool useSSL)
+{
 	int ssl = useSSL == true ? 1 : 0;
 
 	this->print(F("AT+EMAILSSL="));
@@ -1869,16 +2125,19 @@ bool GSMSim::emailSMTPConf(String server, String port, bool useSSL) {
 	this->print(F("\r"));
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		this->print(F("AT+EMAILCID=1\r"));
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 			this->print(F("AT+EMAILTO=30\r"));
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 				this->print(F("AT+SMTPSRV=\""));
 				this->print(server);
 				this->print(F("\",\""));
@@ -1887,26 +2146,32 @@ bool GSMSim::emailSMTPConf(String server, String port, bool useSSL) {
 
 				_buffer = _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 					return true;
 				}
-				else {
+				else
+				{
 					return false;
 				}
 			}
-			else {
+			else
+			{
 				return false;
 			}
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::emailSMTPAuth(String username, String password) {
+bool GSMSim::emailSMTPAuth(String username, String password)
+{
 	this->print(F("AT+SMTPAUTH=1,\""));
 	this->print(username);
 	this->print(F("\",\""));
@@ -1914,14 +2179,17 @@ bool GSMSim::emailSMTPAuth(String username, String password) {
 	this->print(F("\"\r"));
 
 	_buffer = _readSerial();
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::emailSMTPAuth(String username, String password, bool requireAuth) {
+bool GSMSim::emailSMTPAuth(String username, String password, bool requireAuth)
+{
 	int auth = requireAuth == true ? 1 : 0;
 	this->print(F("AT+SMTPAUTH="));
 	this->print(auth);
@@ -1932,30 +2200,37 @@ bool GSMSim::emailSMTPAuth(String username, String password, bool requireAuth) {
 	this->print(F("\"\r"));
 
 	_buffer = _readSerial();
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		return true;
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-bool GSMSim::emailSMTPGmail(String username, String password) {
+bool GSMSim::emailSMTPGmail(String username, String password)
+{
 	bool conf = emailSMTPConf("smtp.gmail.com", "465", true);
-	if (conf) {
+	if (conf)
+	{
 		return emailSMTPAuth(username, password);
 	}
-	else {
+	else
+	{
 		return false;
 	}
 }
-String GSMSim::emailSMTPWrite(String from, String to, String title, String message) {
+String GSMSim::emailSMTPWrite(String from, String to, String title, String message)
+{
 
 	this->print(F("AT+SMTPFROM=\""));
 	this->print(from);
 	this->print("\"\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		this->print("AT+SMTPRCPT=0\r");
 		_buffer = _readSerial();
@@ -1965,14 +2240,16 @@ String GSMSim::emailSMTPWrite(String from, String to, String title, String messa
 		this->print("\"\r");
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 
 			this->print(F("AT+SMTPSUB=\""));
 			this->print(title);
 			this->print("\"\r");
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 
 				uint8_t uzunluk = message.length();
 				this->print(F("AT+SMTPBODY="));
@@ -1985,28 +2262,33 @@ String GSMSim::emailSMTPWrite(String from, String to, String title, String messa
 				this->print(F("\""));
 				_buffer += _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 
 					return "OK";
 				}
-				else {
+				else
+				{
 					return "ERROR:BODY_NOT_SET";
 				}
-
 			}
-			else {
+			else
+			{
 				return "ERROR:TITLE_NOT_SET";
 			}
 		}
-		else {
+		else
+		{
 			return "ERROR:TO_NOT_SET";
 		}
 	}
-	else {
+	else
+	{
 		return "ERROR:FROM_NOT_SET";
 	}
 }
-String GSMSim::emailSMTPWrite(String from, String to, String title, String message, String fromName, String toName) {
+String GSMSim::emailSMTPWrite(String from, String to, String title, String message, String fromName, String toName)
+{
 	this->print(F("AT+SMTPFROM=\""));
 	this->print(from);
 	this->print("\",\"");
@@ -2014,7 +2296,8 @@ String GSMSim::emailSMTPWrite(String from, String to, String title, String messa
 	this->print("\"\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 
 		this->print("AT+SMTPRCPT=0\r");
 		_buffer = _readSerial();
@@ -2026,14 +2309,16 @@ String GSMSim::emailSMTPWrite(String from, String to, String title, String messa
 		this->print("\"\r");
 		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1) {
+		if (_buffer.indexOf("OK") != -1)
+		{
 
 			this->print(F("AT+SMTPSUB=\""));
 			this->print(title);
 			this->print("\"\r");
 			_buffer = _readSerial();
 
-			if (_buffer.indexOf("OK") != -1) {
+			if (_buffer.indexOf("OK") != -1)
+			{
 
 				uint8_t uzunluk = message.length();
 				this->print(F("AT+SMTPBODY="));
@@ -2046,127 +2331,158 @@ String GSMSim::emailSMTPWrite(String from, String to, String title, String messa
 				this->print(F("\""));
 				_buffer += _readSerial();
 
-				if (_buffer.indexOf("OK") != -1) {
+				if (_buffer.indexOf("OK") != -1)
+				{
 
 					return "OK";
 				}
-				else {
+				else
+				{
 					return "ERROR:BODY_NOT_SET";
 				}
-
 			}
-			else {
+			else
+			{
 				return "ERROR:TITLE_NOT_SET";
 			}
 		}
-		else {
+		else
+		{
 			return "ERROR:TO_NOT_SET";
 		}
 	}
-	else {
+	else
+	{
 		return "ERROR:FROM_NOT_SET";
 	}
 }
 
-String GSMSim::emailSMTPSend() {
+String GSMSim::emailSMTPSend()
+{
 
 	this->print("AT+SMTPSEND\r");
 	_buffer = _readSerial();
 
-	if (_buffer.indexOf("OK") != -1) {
+	if (_buffer.indexOf("OK") != -1)
+	{
 		delay(50);
 		_buffer = _readSerial(30000);
-		if (_buffer.indexOf("+SMTPSEND:") != -1) {
+		if (_buffer.indexOf("+SMTPSEND:") != -1)
+		{
 			String kod = _buffer.substring(12);
 			kod.trim();
 
-			if (kod == "1") {
+			if (kod == "1")
+			{
 				return "SUCCESS:EMAIL_SEND";
 			}
-			else if (kod == "61") {
+			else if (kod == "61")
+			{
 				return "ERROR:NETWORK_ERROR";
 			}
-			else if (kod == "62") {
+			else if (kod == "62")
+			{
 				return "ERROR:DNS_RESOLVE_ERROR";
 			}
-			else if (kod == "63") {
+			else if (kod == "63")
+			{
 				return "ERROR:TCP_CONNECTION_ERROR";
 			}
-			else if (kod == "64") {
+			else if (kod == "64")
+			{
 				return "ERROR:TIMEOUT_SMTP_RESPONSE";
 			}
-			else if (kod == "65") {
+			else if (kod == "65")
+			{
 				return "ERROR:SMTP_RESPONSE_ERROR";
 			}
-			else if (kod == "66") {
+			else if (kod == "66")
+			{
 				return "ERROR:NOT_AUTH";
 			}
-			else if (kod == "67") {
+			else if (kod == "67")
+			{
 				return "ERROR:AUTH_FAILED";
 			}
-			else if (kod == "68") {
+			else if (kod == "68")
+			{
 				return "ERROR:BAD_RECIPIENT";
 			}
-			else {
+			else
+			{
 				return "ERROR:ERROR_NO_" + kod;
 			}
 		}
-		else {
+		else
+		{
 			delay(50);
 			_buffer = _readSerial(30000);
 
-			if (_buffer.indexOf("+SMTPSEND:") != -1) {
+			if (_buffer.indexOf("+SMTPSEND:") != -1)
+			{
 				String kod = _buffer.substring(12);
 				kod.trim();
 
-				if (kod == "1") {
+				if (kod == "1")
+				{
 					return "SUCCESS:EMAIL_SEND";
 				}
-				else if (kod == "61") {
+				else if (kod == "61")
+				{
 					return "ERROR:NETWORK_ERROR";
 				}
-				else if (kod == "62") {
+				else if (kod == "62")
+				{
 					return "ERROR:DNS_RESOLVE_ERROR";
 				}
-				else if (kod == "63") {
+				else if (kod == "63")
+				{
 					return "ERROR:TCP_CONNECTION_ERROR";
 				}
-				else if (kod == "64") {
+				else if (kod == "64")
+				{
 					return "ERROR:TIMEOUT_SMTP_RESPONSE";
 				}
-				else if (kod == "65") {
+				else if (kod == "65")
+				{
 					return "ERROR:SMTP_RESPONSE_ERROR";
 				}
-				else if (kod == "66") {
+				else if (kod == "66")
+				{
 					return "ERROR:NOT_AUTH";
 				}
-				else if (kod == "67") {
+				else if (kod == "67")
+				{
 					return "ERROR:AUTH_FAILED";
 				}
-				else if (kod == "68") {
+				else if (kod == "68")
+				{
 					return "ERROR:BAD_RECIPIENT";
 				}
-				else {
+				else
+				{
 					return "ERROR:ERROR_NO_" + kod;
 				}
 			}
-			else {
+			else
+			{
 				return "ERROR:EMAIL_TIMEOUT_ERROR";
 			}
 		}
 	}
-	else {
+	else
+	{
 		return "ERROR:EMAIL_SENDING_ERROR";
 	}
 }
-
 
 //////////////////////////////////////
 //			PRIVATE METHODS			//
 //////////////////////////////////////
 
 // READ FROM SERIAL
-String GSMSim::_readSerial() {
+String GSMSim::_readSerial()
+{
 
 	uint64_t timeOld = millis();
 
@@ -2181,14 +2497,15 @@ String GSMSim::_readSerial() {
 	{
 		if (this->available())
 		{
-			str += (char) this->read();
+			str += (char)this->read();
 		}
 	}
 
 	return str;
 }
 
-String GSMSim::_readSerial(uint32_t timeout) {
+String GSMSim::_readSerial(uint32_t timeout)
+{
 
 	uint64_t timeOld = millis();
 
@@ -2203,7 +2520,7 @@ String GSMSim::_readSerial(uint32_t timeout) {
 	{
 		if (this->available())
 		{
-			str += (char) this->read();
+			str += (char)this->read();
 		}
 	}
 
