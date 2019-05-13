@@ -141,25 +141,17 @@ void GSMSim::reset()
 bool GSMSim::setPhoneFunc(uint8_t level = 1)
 {
 	if (level != 0 || level != 1 || level != 4)
-	{
 		return false;
-	}
-	else
-	{
-		this->print(F("AT+CFUN="));
-		this->print(String(level));
-		this->print(F("\r"));
 
-		_buffer = _readSerial();
-		if ((_buffer.indexOf("OK")) != -1)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	this->print(F("AT+CFUN="));
+	this->print(String(level));
+	this->print(F("\r"));
+
+	_buffer = _readSerial();
+	if ((_buffer.indexOf("OK")) != -1)
+		return true;
+
+	return false;
 }
 
 // SIGNAL QUALTY - 0-31 | 0-> poor | 31 - Full | 99 -> Unknown
@@ -169,13 +161,9 @@ uint8_t GSMSim::signalQuality()
 	_buffer = _readSerial();
 
 	if ((_buffer.indexOf("+CSQ:")) != -1)
-	{
 		return _buffer.substring(_buffer.indexOf("+CSQ: ") + 6, _buffer.indexOf(",")).toInt();
-	}
-	else
-	{
-		return 99;
-	}
+
+	return 99;
 }
 
 // IS Module connected to the operator?
@@ -185,13 +173,9 @@ bool GSMSim::isRegistered()
 	_buffer = _readSerial();
 
 	if ((_buffer.indexOf("+CREG: 0,1")) != -1 || (_buffer.indexOf("+CREG: 0,5")) != -1 || (_buffer.indexOf("+CREG: 1,1")) != -1 || (_buffer.indexOf("+CREG: 1,5")) != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // IS SIM Inserted?
@@ -199,24 +183,15 @@ bool GSMSim::isSimInserted()
 {
 	this->print(F("AT+CSMINS?\r"));
 	_buffer = _readSerial();
-	if (_buffer.indexOf(",") != -1)
-	{
-		// bölelim
-		String data = _buffer.substring(_buffer.indexOf(","), _buffer.indexOf("OK"));
-		data.trim();
-		if (data == "1")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
+	if (_buffer.indexOf(",") == -1)
 		return false;
-	}
+
+	String data = _buffer.substring(_buffer.indexOf(","), _buffer.indexOf("OK"));
+	data.trim();
+	if (data == "1")
+		return true;
+
+	return false;
 }
 
 // Pin statüsü - AT+CPIN?
@@ -266,13 +241,9 @@ String GSMSim::operatorName()
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf(",") == -1)
-	{
 		return "NOT CONNECTED";
-	}
-	else
-	{
-		return _buffer.substring(_buffer.indexOf(",\"") + 2, _buffer.lastIndexOf("\""));
-	}
+
+	return _buffer.substring(_buffer.indexOf(",\"") + 2, _buffer.lastIndexOf("\""));
 }
 
 // OPERATOR NAME FROM SIM
@@ -287,13 +258,9 @@ String GSMSim::operatorNameFromSim()
 	return _buffer;
 	*/
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return _buffer.substring(_buffer.indexOf(" \"") + 2, _buffer.lastIndexOf("\""));
-	}
-	else
-	{
-		return "NOT CONNECTED";
-	}
+
+	return "NOT CONNECTED";
 }
 
 // PHONE STATUS
@@ -303,13 +270,9 @@ uint8_t GSMSim::phoneStatus()
 	_buffer = _readSerial();
 
 	if ((_buffer.indexOf("+CPAS: ")) != -1)
-	{
 		return _buffer.substring(_buffer.indexOf("+CPAS: ") + 7, _buffer.indexOf("+CPAS: ") + 9).toInt();
-	}
-	else
-	{
-		return 99; // not read from module
-	}
+
+	return 99; // not read from module
 }
 
 // ECHO OFF
@@ -318,13 +281,9 @@ bool GSMSim::echoOff()
 	this->print(F("ATE0\r"));
 	_buffer = _readSerial();
 	if ((_buffer.indexOf("OK")) != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // ECHO ON
@@ -333,13 +292,9 @@ bool GSMSim::echoOn()
 	this->print(F("ATE1\r"));
 	_buffer = _readSerial();
 	if ((_buffer.indexOf("OK")) != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // Modül Üreticisi
@@ -442,13 +397,9 @@ bool GSMSim::setRingerVolume(uint8_t level)
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // Hoparlör sesi
@@ -478,13 +429,9 @@ bool GSMSim::setSpeakerVolume(uint8_t level)
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 String GSMSim::moduleDebug()
@@ -511,22 +458,14 @@ bool GSMSim::call(char *phone_number)
 	this->print(";\r");
 
 	if (sorgulamaYapma)
-	{
 		return true;
-	}
-	else
-	{
-		_buffer = _readSerial();
 
-		if (_buffer.indexOf("OK") != -1)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	_buffer = _readSerial();
+
+	if (_buffer.indexOf("OK") != -1)
+		return true;
+
+	return false;
 }
 
 // Gelen aramayı cevaplar
@@ -537,13 +476,9 @@ bool GSMSim::callAnswer()
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // Aramayı reddeder veya görüşmeyi sonlandırır!
@@ -553,13 +488,9 @@ bool GSMSim::callHangoff()
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // Arama durumunu belirtir
@@ -588,13 +519,9 @@ bool GSMSim::callSetCOLP(bool active)
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // COLP Aktif mi değil mi?
@@ -604,13 +531,9 @@ bool GSMSim::callIsCOLPActive()
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("+COLP: 1") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 
 // Arayanı söyleme aktif mi değil mi?
@@ -624,13 +547,9 @@ bool GSMSim::callActivateListCurrent(bool active)
 	_buffer = _readSerial();
 
 	if (_buffer.indexOf("OK") != -1)
-	{
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+
+	return false;
 }
 // şimdi arayanı söyle
 String GSMSim::callReadCurrentCall(String serialRaw)
@@ -1968,7 +1887,6 @@ bool GSMSim::timeSetServer(int timezone, String server)
 }
 String GSMSim::timeSyncFromServer()
 {
-
 	this->print(F("AT+CNTP\r"));
 	_buffer = _readSerial();
 	//delay(50);
