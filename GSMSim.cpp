@@ -1627,7 +1627,7 @@ String GSMSim::gprsHTTPGet(String url, bool read)
 	return result;
 }
 
-String GSMSim::gprsHTTPPost(String url, String data)
+String GSMSim::gprsHTTPPost(String url, String data, String contentType = "text/plain")
 {
 	bool https = false;
 	if (url.startsWith("https://"))
@@ -1661,7 +1661,7 @@ String GSMSim::gprsHTTPPost(String url, String data)
 	this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 	_buffer = _readSerial();
 	if (_buffer.indexOf("OK") == -1)
-		return "HTTP_PARAMETER_ERROR";
+		return "HTTP_PARAMETER_CID_ERROR";
 
 	// Set url
 	this->print(F("AT+HTTPPARA=\"URL\",\""));
@@ -1669,7 +1669,15 @@ String GSMSim::gprsHTTPPost(String url, String data)
 	this->print("\"\r");
 	_buffer = _readSerial();
 	if (_buffer.indexOf("OK") == -1)
-		return "HTTP_PARAMETER_ERROR";
+		return "HTTP_PARAMETER_URL_ERROR";
+
+	// Set content type
+	this->print(F("AT+HTTPPARA=\"CONTENT\",\""));
+	this->print(contentType);
+	this->print("\"\r");
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_CONTENT_ERROR";
 
 	// Indicate that data will be transfered within 30 secods.
 	this->print(F("AT+HTTPDATA="));
@@ -1715,7 +1723,7 @@ String GSMSim::gprsHTTPPost(String url, String data)
 	return result;
 }
 
-String GSMSim::gprsHTTPPost(String url, String data, bool read)
+String GSMSim::gprsHTTPPost(String url, String data, String contentType, bool read) 
 {
 	bool https = false;
 	if (url.startsWith("https://"))
@@ -1758,6 +1766,14 @@ String GSMSim::gprsHTTPPost(String url, String data, bool read)
 	_buffer = _readSerial();
 	if (_buffer.indexOf("OK") == -1)
 		return "HTTP_PARAMETER_ERROR";
+
+	// Set content type
+	this->print(F("AT+HTTPPARA=\"CONTENT\",\""));
+	this->print(contentType);
+	this->print("\"\r");
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_CONTENT_ERROR";
 
 	// Indicate that data will be transfered within 30 secods.
 	this->print(F("AT+HTTPDATA="));
@@ -1891,7 +1907,7 @@ String GSMSim::timeSyncFromServer()
 	_buffer = _readSerial();
 	//delay(50);
 	_buffer = _readSerial(20000);
-
+	Serial.println(_buffer);
 	if (_buffer.indexOf("+CNTP:") == -1)
 		return "AT_COMMAND_ERROR";
 
