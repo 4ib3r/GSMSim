@@ -481,7 +481,7 @@ bool GSMSim::callAnswer() {
 		return true;
 	}
 	else {
-		false;
+		return false;
 	}
 }
 
@@ -494,7 +494,7 @@ bool GSMSim::callHangoff() {
 	{
 		return true;
 	} else {
-		false;
+		return false;
 	}
 }
 
@@ -526,7 +526,7 @@ bool GSMSim::callSetCOLP(bool active) {
 		return true;
 	}
 	else {
-		false;
+		return false;
 	}
 }
 
@@ -539,7 +539,7 @@ bool GSMSim::callIsCOLPActive() {
 		return true;
 	}
 	else {
-		false;
+		return false;
 	}
 }
 
@@ -557,7 +557,7 @@ bool GSMSim::callActivateListCurrent(bool active) {
 		return true;
 	}
 	else {
-		false;
+		return false;
 	}
 }
 // şimdi arayanı söyle
@@ -1057,12 +1057,12 @@ bool GSMSim::fmOpen(bool mainChannel) {
 }
 bool GSMSim::fmOpen(bool mainChannel, uint8_t freq) {
 	uint8_t channel = mainChannel == true ? 1 : 0;
-	uint8_t frekans = 875;
+	uint8_t frekans = (uint8_t)875;
 	if (freq < 875) {
-		frekans = 875;
+		frekans = (uint8_t)875;
 	}
 	if (freq > 1080) {
-		frekans = 1080;
+		frekans = (uint8_t)1080;
 	}
 
 
@@ -1126,12 +1126,12 @@ uint8_t GSMSim::fmGetFreq() {
 // SET FM RADIO FREQ
 bool GSMSim::fmSetFreq(uint8_t freq) {
 	this->print(F("AT+FMFREQ="));
-	uint8_t frekans = 875;
+	uint8_t frekans = (uint8_t)875;
 	if (freq < 875) {
-		frekans = 875;
+		frekans = (uint8_t)875;
 	}
 	if (freq > 1080) {
-		frekans = 1080;
+		frekans = (uint8_t)1080;
 	}
 	this->print(frekans);
 	this->print(F("\r"));
@@ -1423,7 +1423,7 @@ String GSMSim::gprsGetIP() {
 			return veri;
 		}
 		else {
-			"ERROR:NO_IP_FETCH";
+			return "ERROR:NO_IP_FETCH";
 		}
 	}
 }
