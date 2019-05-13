@@ -227,7 +227,8 @@ class GSMSim : public SoftwareSerial
 		bool gprsCloseConn();
 		String gprsHTTPGet(String url);
 		String gprsHTTPGet(String url, bool read);
-
+		String gprsHTTPPost(String url, String data);
+		String gprsHTTPPost(String url, String data, bool read);
 
 		// NTP Komutları
 		bool timeSetServer(int timezone);

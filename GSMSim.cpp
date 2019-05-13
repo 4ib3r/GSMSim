@@ -1446,7 +1446,8 @@ String GSMSim::gprsHTTPGet(String url) {
 	bool https = false;
 	if(url.startsWith("https://")) {
 		// Remove https if SSL
-		url = url.substring(8);
+		//url = url.substring(8);
+		https = true;
 	}
 	if (gprsIsConnected()) {
 		// Terminate http connection, if it opened before!
@@ -1456,8 +1457,16 @@ String GSMSim::gprsHTTPGet(String url) {
 		this->print(F("AT+HTTPINIT\r"));
 		_buffer = _readSerial();
 		if (_buffer.indexOf("OK") != -1) {
-			if(https)
-				this->print("AT+HTTPSSL=1");
+			if(https) {
+				this->print("AT+HTTPSSL=1\r");
+				_buffer = _readSerial();
+				if (_buffer.indexOf("OK") != -1) {
+				}
+				else
+				{
+					return "HTTPSSL_ERROR";
+				}				
+			}
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
 			if (_buffer.indexOf("OK") != -1) {
@@ -1514,11 +1523,13 @@ String GSMSim::gprsHTTPGet(String url) {
 		return "GPRS_NOT_CONNECTED";
 	}
 }
+
 String GSMSim::gprsHTTPGet(String url, bool read) {
 	bool https = false;
 	if(url.startsWith("https://")) {
 		// Remove https if SSL
 		url = url.substring(8);
+		https = true;
 	}
 	if (gprsIsConnected()) {
 		// Terminate http connection, if it opened before!
@@ -1530,8 +1541,12 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 
 		//return _buffer;
 		if (_buffer.indexOf("OK") != -1) {
-			if(https)
-				this->print("AT+HTTPSSL=1");
+			if(https) {
+				this->print("AT+HTTPSSL=1\r");
+				_buffer = _readSerial();
+				if (_buffer.indexOf("OK") != -1) {
+				}
+			}
 			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
 			_buffer = _readSerial();
 			if (_buffer.indexOf("OK") != -1) {
@@ -1608,6 +1623,108 @@ String GSMSim::gprsHTTPGet(String url, bool read) {
 	}
 }
 
+String GSMSim::gprsHTTPPost(String url, String data) {
+	bool https = false;
+	if(url.startsWith("https://")) {
+		https = true;
+	}
+	
+	if (gprsIsConnected()) {
+		// Terminate http connection, if it opened before!
+		this->print(F("AT+HTTPTERM\r"));
+		_buffer = _readSerial();
+
+		this->print(F("AT+HTTPINIT\r"));
+		_buffer = _readSerial();
+		if (_buffer.indexOf("OK") != -1) {
+			if(https) {
+				this->print("AT+HTTPSSL=1\r");
+				_buffer = _readSerial();
+				if (_buffer.indexOf("OK") != -1) {
+				}
+				else
+				{
+					return "HTTPSSL_ERROR";
+				}				
+			}
+			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
+			_buffer = _readSerial();
+
+			if (_buffer.indexOf("OK") != -1) {
+				this->print(F("AT+HTTPPARA=\"URL\",\""));
+				this->print(url);
+				this->print("\"\r");
+				_buffer = _readSerial();
+
+				if (_buffer.indexOf("OK") != -1) {
+					this->print(F("AT+HTTPDATA="));
+					this->print(data.length());
+					this->print(F(",30000\r"));
+					_buffer = _readSerial();
+
+					if (_buffer.indexOf("DOWNLOAD") != -1) {
+						this->print(data);
+						this->print(F("\r"));
+						_buffer = _readSerial();
+
+						if (_buffer.indexOf("OK") != -1) {
+							this->print(F("AT+HTTPACTION=1\r"));
+							_buffer = _readSerial();
+
+							if (_buffer.indexOf("OK") != -1) {
+								delay(100);
+								_buffer = _readSerial(10000);
+
+								if (_buffer.indexOf("+HTTPACTION: 1,") != -1) {
+									String kod = _buffer.substring(_buffer.indexOf(",")+1, _buffer.lastIndexOf(","));
+									String uzunluk = _buffer.substring(_buffer.lastIndexOf(",")+1);
+
+									String sonuc = "METHOD:POST|HTTPCODE:";
+									sonuc += kod;
+									sonuc += "|LENGTH:";
+									sonuc += uzunluk;
+
+									// Bağlantıyı kapat!
+									this->print(F("AT+HTTPTERM\r"));
+									_buffer = _readSerial();
+
+									sonuc.trim();
+
+									return sonuc;
+								}
+								else {
+									return "HTTP_ACTION_READ_ERROR";
+								}
+							}
+							else {
+								return "HTTP_ACTION_ERROR";
+							}
+						}
+						else {
+							return "HTTP_DOWNLOAD_DATA_ERROR";
+						}
+					}
+					else {
+						return "HTTP_DATA_ERROR";
+					}
+				}
+				else {
+					return "HTTP_PARAMETER_ERROR";
+				}
+
+			}
+			else {
+				return "HTTP_PARAMETER_ERROR";
+			}
+		}
+		else {
+			return "HTTP_INIT_ERROR";
+		}
+	}
+	else {
+		return "GPRS_NOT_CONNECTED";
+	}
+}
 
 
 //////////////////////////////////////
