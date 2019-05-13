@@ -636,7 +636,7 @@ bool GSMSim::callActivateListCurrent(bool active)
 String GSMSim::callReadCurrentCall(String serialRaw)
 {
 
-	String sonuc = "";
+	String result = "";
 	if (serialRaw.indexOf("+CLCC:") != -1)
 	{
 		String durum = serialRaw.substring(11, 13);
@@ -671,10 +671,10 @@ String GSMSim::callReadCurrentCall(String serialRaw)
 			durum = "STATUS:DISCONNECT"; // görüşme bitti
 		}
 
-		sonuc = durum + "|NUMBER:" + numara;
+		result = durum + "|NUMBER:" + numara;
 	}
 
-	return sonuc;
+	return result;
 }
 
 //////////////////////////////////////
@@ -692,14 +692,14 @@ bool GSMSim::smsTextMode(bool textModeON)
 	{
 		this->print(F("AT+CMGF=0\r"));
 	}
-	bool sonuc = false;
+	bool result = false;
 	_buffer = _readSerial();
 	if (_buffer.indexOf("OK") != -1)
 	{
-		sonuc = true;
+		result = true;
 	}
 
-	return sonuc;
+	return result;
 }
 
 // verilen numara ve mesajı gönderir!
@@ -965,14 +965,14 @@ String GSMSim::smsReadMessageCenter()
 	this->print("AT+CSCA?\r");
 	_buffer = _readSerial();
 
-	String sonuc = "";
+	String result = "";
 
 	if (_buffer.indexOf("+CSCA:") != -1)
 	{
-		sonuc = _buffer.substring(_buffer.indexOf("+CSCA:") + 8, _buffer.indexOf("\","));
+		result = _buffer.substring(_buffer.indexOf("+CSCA:") + 8, _buffer.indexOf("\","));
 	}
 
-	return sonuc;
+	return result;
 }
 
 // mesaj merkez numarasını değiştirir
@@ -1273,9 +1273,9 @@ uint8_t GSMSim::fmGetFreq()
 
 	if (_buffer.indexOf("+FMFREQ:") != -1)
 	{
-		String sonuc = _buffer.substring(_buffer.indexOf("+FMFREQ:") + 8);
-		sonuc.trim();
-		return sonuc.toInt();
+		String result = _buffer.substring(_buffer.indexOf("+FMFREQ:") + 8);
+		result.trim();
+		return result.toInt();
 	}
 	else
 	{
@@ -1319,9 +1319,9 @@ uint8_t GSMSim::fmGetVolume()
 
 	if (_buffer.indexOf("+FMVOLUME:") != -1)
 	{
-		String sonuc = _buffer.substring(_buffer.indexOf("+FMVOLUME:") + 10);
-		sonuc.trim();
-		return sonuc.toInt();
+		String result = _buffer.substring(_buffer.indexOf("+FMVOLUME:") + 10);
+		result.trim();
+		return result.toInt();
 	}
 	else
 	{
@@ -1664,95 +1664,64 @@ String GSMSim::gprsHTTPGet(String url)
 	if (url.startsWith("https://"))
 	{
 		// Remove https if SSL
-		//url = url.substring(8);
+		//url = url.substring(8); // Unsure if this has any effect.
 		https = true;
 	}
-	if (gprsIsConnected())
-	{
-		// Terminate http connection, if it opened before!
-		this->print(F("AT+HTTPTERM\r"));
-		_buffer = _readSerial();
-
-		this->print(F("AT+HTTPINIT\r"));
-		_buffer = _readSerial();
-		if (_buffer.indexOf("OK") != -1)
-		{
-			if (https)
-			{
-				this->print("AT+HTTPSSL=1\r");
-				_buffer = _readSerial();
-				if (_buffer.indexOf("OK") != -1)
-				{
-				}
-				else
-				{
-					return "HTTPSSL_ERROR";
-				}
-			}
-			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
-			_buffer = _readSerial();
-			if (_buffer.indexOf("OK") != -1)
-			{
-				this->print(F("AT+HTTPPARA=\"URL\",\""));
-				this->print(url);
-				this->print("\"\r");
-				_buffer = _readSerial();
-
-				if (_buffer.indexOf("OK") != -1)
-				{
-					this->print(F("AT+HTTPACTION=0\r"));
-					_buffer = _readSerial();
-					if (_buffer.indexOf("OK") != -1)
-					{
-						delay(100);
-						_buffer = _readSerial(10000);
-						if (_buffer.indexOf("+HTTPACTION: 0,") != -1)
-						{
-							String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
-							String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
-
-							String sonuc = "METHOD:GET|HTTPCODE:";
-							sonuc += kod;
-							sonuc += "|LENGTH:";
-							sonuc += uzunluk;
-
-							// Bağlantıyı kapat!
-							this->print(F("AT+HTTPTERM\r"));
-							_buffer = _readSerial();
-
-							sonuc.trim();
-
-							return sonuc;
-						}
-						else
-						{
-							return "HTTP_ACTION_READ_ERROR";
-						}
-					}
-					else
-					{
-						return "HTTP_ACTION_ERROR";
-					}
-				}
-				else
-				{
-					return "HTTP_PARAMETER_ERROR";
-				}
-			}
-			else
-			{
-				return "HTTP_PARAMETER_ERROR";
-			}
-		}
-		else
-		{
-			return "HTTP_INIT_ERROR";
-		}
-	}
-	else
-	{
+	if (!gprsIsConnected())
 		return "GPRS_NOT_CONNECTED";
+
+	// Terminate http connection, if it opened before!
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+	this->print(F("AT+HTTPINIT\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_INIT_ERROR";
+
+	if (https)
+	{
+		this->print("AT+HTTPSSL=1\r");
+		_buffer = _readSerial();
+		if (_buffer.indexOf("OK") == -1)
+			return "HTTPSSL_ERROR";
 	}
+	this->print(F("AT+HTTPPARA=\"CID\",1\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	this->print(F("AT+HTTPPARA=\"URL\",\""));
+	this->print(url);
+	this->print("\"\r");
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	this->print(F("AT+HTTPACTION=0\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_ACTION_ERROR";
+
+	delay(100);
+	_buffer = _readSerial(10000);
+	if (_buffer.indexOf("+HTTPACTION: 0,") == -1)
+		return "HTTP_ACTION_READ_ERROR";
+
+	String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
+	String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
+
+	String result = "METHOD:GET|HTTPCODE:";
+	result += kod;
+	result += "|LENGTH:";
+	result += uzunluk;
+
+	// Bağlantıyı kapat!
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+
+	result.trim();
+
+	return result;
 }
 
 String GSMSim::gprsHTTPGet(String url, bool read)
@@ -1761,114 +1730,81 @@ String GSMSim::gprsHTTPGet(String url, bool read)
 	if (url.startsWith("https://"))
 	{
 		// Remove https if SSL
-		url = url.substring(8);
+		//url = url.substring(8); // Unsure if this has any effect.
 		https = true;
 	}
-	if (gprsIsConnected())
-	{
-		// Terminate http connection, if it opened before!
-		this->print(F("AT+HTTPTERM\r"));
-		_buffer = _readSerial();
-
-		this->print(F("AT+HTTPINIT\r\n"));
-		_buffer = _readSerial();
-
-		//return _buffer;
-		if (_buffer.indexOf("OK") != -1)
-		{
-			if (https)
-			{
-				this->print("AT+HTTPSSL=1\r");
-				_buffer = _readSerial();
-				if (_buffer.indexOf("OK") != -1)
-				{
-				}
-			}
-			this->print(F("AT+HTTPPARA=\"CID\",1\r"));
-			_buffer = _readSerial();
-			if (_buffer.indexOf("OK") != -1)
-			{
-				this->print(F("AT+HTTPPARA=\"URL\",\""));
-				this->print(url);
-				this->print(F("\"\r"));
-				_buffer = _readSerial();
-
-				if (_buffer.indexOf("OK") != -1)
-				{
-					this->print(F("AT+HTTPACTION=0\r"));
-					_buffer = _readSerial();
-					if (_buffer.indexOf("OK") != -1)
-					{
-						delay(100);
-						_buffer = _readSerial(10000);
-						if (_buffer.indexOf("+HTTPACTION: 0,") != -1)
-						{
-							String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
-							String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
-							kod.trim();
-							uzunluk.trim();
-
-							this->print(F("AT+HTTPREAD\r"));
-							_buffer = _readSerial(10000);
-
-							String okuma = "";
-
-							if (_buffer.indexOf("+HTTPREAD:") != -1)
-							{
-
-								String kriter = "+HTTPREAD: " + uzunluk;
-								String veri = _buffer.substring(_buffer.indexOf(kriter) + kriter.length(), _buffer.lastIndexOf("OK"));
-								okuma = veri;
-							}
-							else
-							{
-								return "ERROR:HTTP_READ_ERROR";
-							}
-
-							String sonuc = "METHOD:GET|HTTPCODE:";
-							sonuc += kod;
-							sonuc += "|LENGTH:";
-							sonuc += uzunluk;
-							sonuc += "|DATA:";
-							okuma.trim();
-							sonuc += okuma;
-
-							this->print(F("AT+HTTPTERM\r"));
-							_buffer = _readSerial();
-
-							sonuc.trim();
-
-							return sonuc;
-						}
-						else
-						{
-							return "ERROR:HTTP_ACTION_READ_ERROR";
-						}
-					}
-					else
-					{
-						return "ERROR:HTTP_ACTION_ERROR";
-					}
-				}
-				else
-				{
-					return "ERROR:HTTP_PARAMETER_ERROR";
-				}
-			}
-			else
-			{
-				return "ERROR:HTTP_PARAMETER_ERROR";
-			}
-		}
-		else
-		{
-			return "ERROR:HTTP_INIT_ERROR";
-		}
-	}
-	else
-	{
+	if (!gprsIsConnected())
 		return "ERROR:GPRS_NOT_CONNECTED";
+
+	// Terminate http connection, if it opened before!
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+	this->print(F("AT+HTTPINIT\r\n"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_INIT_ERROR";
+
+	if (https)
+	{
+		this->print("AT+HTTPSSL=1\r");
+		_buffer = _readSerial();
+		if (_buffer.indexOf("OK") == -1)
+			return "HTTP_SSL_ERROR";
 	}
+	this->print(F("AT+HTTPPARA=\"CID\",1\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	this->print(F("AT+HTTPPARA=\"URL\",\""));
+	this->print(url);
+	this->print(F("\"\r"));
+	_buffer = _readSerial();
+
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_PARAMETER_ERROR";
+
+	this->print(F("AT+HTTPACTION=0\r"));
+	_buffer = _readSerial();
+	if (_buffer.indexOf("OK") == -1)
+		return "HTTP_ACTION_ERROR";
+
+	delay(100);
+	_buffer = _readSerial(10000);
+	if (_buffer.indexOf("+HTTPACTION: 0,") == -1)
+		return "HTTP_ACTION_READ_ERROR";
+
+	String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
+	String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
+	kod.trim();
+	uzunluk.trim();
+
+	this->print(F("AT+HTTPREAD\r"));
+	_buffer = _readSerial(10000);
+
+	String okuma = "";
+
+	if (_buffer.indexOf("+HTTPREAD:") == -1)
+		return "ERROR:HTTP_READ_ERROR";
+
+	String kriter = "+HTTPREAD: " + uzunluk;
+	String veri = _buffer.substring(_buffer.indexOf(kriter) + kriter.length(), _buffer.lastIndexOf("OK"));
+	okuma = veri;
+
+	String result = "METHOD:GET|HTTPCODE:";
+	result += kod;
+	result += "|LENGTH:";
+	result += uzunluk;
+	result += "|DATA:";
+	okuma.trim();
+	result += okuma;
+
+	this->print(F("AT+HTTPTERM\r"));
+	_buffer = _readSerial();
+
+	result.trim();
+
+	return result;
 }
 
 String GSMSim::gprsHTTPPost(String url, String data)
@@ -1876,6 +1812,8 @@ String GSMSim::gprsHTTPPost(String url, String data)
 	bool https = false;
 	if (url.startsWith("https://"))
 	{
+		// Remove https if SSL
+		//url = url.substring(8); // Unsure if this has any effect.
 		https = true;
 	}
 
@@ -1943,18 +1881,18 @@ String GSMSim::gprsHTTPPost(String url, String data)
 	String kod = _buffer.substring(_buffer.indexOf(",") + 1, _buffer.lastIndexOf(","));
 	String uzunluk = _buffer.substring(_buffer.lastIndexOf(",") + 1);
 
-	String sonuc = "METHOD:POST|HTTPCODE:";
-	sonuc += kod;
-	sonuc += "|LENGTH:";
-	sonuc += uzunluk;
+	String result = "METHOD:POST|HTTPCODE:";
+	result += kod;
+	result += "|LENGTH:";
+	result += uzunluk;
 
 	// Bağlantıyı kapat!
 	this->print(F("AT+HTTPTERM\r"));
 	_buffer = _readSerial();
 
-	sonuc.trim();
+	result.trim();
 
-	return sonuc;
+	return result;
 }
 
 //////////////////////////////////////
